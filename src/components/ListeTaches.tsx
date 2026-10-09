@@ -1,0 +1,65 @@
+import { useEffect, useState } from 'react';
+import type { Todo } from '../types';
+
+function ListeTaches() {
+    const [taches, setTaches] = useState<Todo[]>([]);
+    const [chargement, setChargement] = useState(true);
+    const [erreur, setErreur] = useState('');
+
+    useEffect(() => {
+        let annule = false;
+
+        async function chargerTaches() {
+            try {
+                const reponse = await fetch(
+                    'https://jsonplaceholder.typicode.com/users/1/todos'
+                );
+
+                if (!reponse.ok) {
+                    throw new Error('Erreur lors du chargement des tâches');
+                }
+
+                const donnees: Todo[] = await reponse.json();
+
+                if (!annule) {
+                    setTaches(donnees);
+                    setChargement(false);
+                }
+            } catch (e) {
+                if (!annule) {
+                    setErreur(
+                        e instanceof Error ? e.message : 'Erreur inconnue'
+                    );
+                    setChargement(false);
+                }
+            }
+        }
+
+        chargerTaches();
+
+        return () => {
+            annule = true;
+        };
+    }, []);
+
+    if (chargement) {
+        return <p>Chargement des tâches...</p>;
+    }
+
+    if (erreur) {
+        return <p role="alert">Erreur : {erreur}</p>;
+    }
+
+    return (
+        <ul>
+            {taches.map((tache) => (
+                <li key={tache.id}>
+                    {tache.completed ? '☑' : '☐'} {tache.title}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+export default ListeTaches;
+
